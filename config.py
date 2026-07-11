@@ -2,8 +2,19 @@ import os
 
 
 class Config:
-    SECRET_KEY = "uba_staff_selection_secret_key"
-    SQLALCHEMY_DATABASE_URI = "sqlite:///staff.db"
+    SECRET_KEY = os.getenv("SECRET_KEY", "uba_staff_selection_secret_key")
+    
+    # Use PostgreSQL on production, SQLite locally
+    if os.getenv("DATABASE_URL"):
+        # For Vercel/Production - fix PostgreSQL URL scheme if needed
+        database_url = os.getenv("DATABASE_URL")
+        if database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql://", 1)
+        SQLALCHEMY_DATABASE_URI = database_url
+    else:
+        # Local development
+        SQLALCHEMY_DATABASE_URI = "sqlite:///staff.db"
+    
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     UPLOAD_FOLDER = "uploads/cv"
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024
