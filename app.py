@@ -1,4 +1,4 @@
-import csv
+﻿import csv
 import os
 import re
 import secrets
@@ -36,7 +36,7 @@ except ImportError:  # pragma: no cover
 from config import Config
 from models import AuditLog, Job, JobApplication, SavedJob, User, db
 
-app = Flask(__name__)
+app = Flask(__name__, instance_path=os.path.join("/tmp", "flask_instance") if os.getenv("VERCEL") else None)
 app.config.from_object(Config)
 app.config["PROFILE_UPLOAD_FOLDER"] = os.path.join("uploads", "profile")
 
