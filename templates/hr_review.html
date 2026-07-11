@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-header">
+    <h1>HR Screening Queue</h1>
+    <p>Shortlist or reject applicants currently under review.</p>
+</section>
+
+<section class="card-block">
+    <form class="job-search-bar" method="GET" action="{{ url_for('hr_review') }}">
+        <select name="vacancy_id">
+            <option value="">All Vacancies</option>
+            {% for vacancy in vacancy_options %}
+                <option value="{{ vacancy.id }}" {% if selected_vacancy_id == vacancy.id %}selected{% endif %}>{{ vacancy.title }}</option>
+            {% endfor %}
+        </select>
+        <button class="btn" type="submit">Filter</button>
+        <a class="btn btn-outline" href="{{ url_for('hr_review') }}">Clear</a>
+    </form>
+
+    {% if applications %}
+    <table>
+        <tr>
+            <th>Applicant</th>
+            <th>Application ID</th>
+            <th>Vacancy</th>
+            <th>Submission Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        {% for item in applications %}
+        <tr>
+            <td data-label="Applicant">{{ item.user.fullname }}</td>
+            <td data-label="Application ID">APP-{{ "%06d"|format(item.id) }}</td>
+            <td data-label="Vacancy">{{ item.job.title }}</td>
+            <td data-label="Submission Date">{{ item.created_at.strftime("%Y-%m-%d %H:%M:%S UTC") }}</td>
+            <td data-label="Status">UNDER_REVIEW</td>
+            <td data-label="Actions">
+                <form method="POST" action="{{ url_for('shortlist_application', application_id=item.id) }}">
+                    <button class="btn btn-sm" type="submit">Shortlist</button>
+                </form>
+                <form method="POST" action="{{ url_for('reject_application', application_id=item.id) }}">
+                    <button class="btn btn-sm danger" type="submit">Reject</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No under-review applications found for this filter.</p>
+    {% endif %}
+</section>
+{% endblock %}

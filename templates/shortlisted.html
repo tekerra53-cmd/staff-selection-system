@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Shortlisted Candidates Report</h1>
+    <p>Applicants currently shortlisted for assessment.</p>
+    <p><a class="btn btn-sm" href="{{ url_for('shortlisted_csv') }}">Export CSV</a></p>
+</section>
+
+<section class="card-block">
+    {% if applications %}
+    <table>
+        <tr>
+            <th>Applicant</th>
+            <th>Email</th>
+            <th>Vacancy</th>
+            <th>Department</th>
+            <th>Auto Score</th>
+            <th>Shortlisted On</th>
+        </tr>
+        {% for item in applications %}
+        <tr>
+            <td data-label="Applicant">{{ item.user.fullname }}</td>
+            <td data-label="Email">{{ item.user.email }}</td>
+            <td data-label="Vacancy">{{ item.job.title }}</td>
+            <td data-label="Department">{{ item.job.department }}</td>
+            <td data-label="Auto Score">{{ item.score }}</td>
+            <td data-label="Shortlisted On">
+                {% if item.shortlisted_at %}
+                    {{ item.shortlisted_at.strftime('%Y-%m-%d %H:%M') }}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No shortlisted candidates yet.</p>
+    {% endif %}
+</section>
+{% endblock %}

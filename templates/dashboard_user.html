@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="dashboard-banner">
+    <div class="profile-hero">
+        <div class="profile-avatar-wrap">
+            {% if current_user.profile_image %}
+                <img class="profile-avatar" src="{{ url_for('profile_image') }}" alt="Profile picture">
+            {% else %}
+                <div class="profile-avatar profile-avatar-placeholder {{ current_user.email|avatar_theme }}">{{ current_user.fullname[:1] }}</div>
+            {% endif %}
+        </div>
+        <div>
+            <h1>Applicant Dashboard</h1>
+            <p>Welcome, {{ current_user.fullname }}</p>
+            <p class="meta">{{ current_user.email }}</p>
+        </div>
+    </div>
+</section>
+
+{% if not profile_complete %}
+<section class="notice-bar">
+    <strong>Complete Your Profile</strong>
+    <p>Add profile details, upload your CV and profile picture for a stronger application profile.</p>
+    <a href="#profile-management">Update Profile</a>
+</section>
+{% endif %}
+
+<section class="stats-grid">
+    <article class="stat-box"><h3>{{ total_applications }}</h3><p>Total Applications</p></article>
+    <article class="stat-box"><h3>{{ pending_count }}</h3><p>Under Review</p></article>
+    <article class="stat-box"><h3>{{ shortlisted_count }}</h3><p>Shortlisted</p></article>
+    <article class="stat-box"><h3>{{ assessed_count }}</h3><p>Assessed</p></article>
+    <article class="stat-box"><h3>{{ selected_count }}</h3><p>Selected</p></article>
+    <article class="stat-box"><h3>{{ saved_jobs_count }}</h3><p>Saved Vacancies</p></article>
+</section>
+
+<section class="quick-actions">
+    <a class="action-card" href="{{ url_for('jobs') }}">
+        <h3>Browse Vacancies</h3>
+        <p>Search and apply for open roles</p>
+    </a>
+    <a class="action-card" href="#my-applications">
+        <h3>Application Status</h3>
+        <p>Track your progress in the pipeline</p>
+    </a>
+    <a class="action-card" href="#profile-management">
+        <h3>Manage Profile</h3>
+        <p>Update personal details and uploads</p>
+    </a>
+</section>
+
+<section class="card-block" id="profile-management">
+    <h2>Profile Management</h2>
+    <div class="profile-management-grid">
+        <div class="card-block profile-card">
+            <h3>Profile Picture</h3>
+            {% if current_user.profile_image %}
+                <img class="profile-avatar profile-avatar-large" src="{{ url_for('profile_image') }}" alt="Profile picture">
+            {% else %}
+                <div class="profile-avatar profile-avatar-large profile-avatar-placeholder {{ current_user.email|avatar_theme }}">{{ current_user.fullname[:1] }}</div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('upload_profile_image') }}" enctype="multipart/form-data" id="profile-image-form">
+                <input id="profile-image-input" type="file" name="profile_image" accept=".png,.jpg,.jpeg,.webp" required>
+                <div class="crop-preview-wrap" id="crop-preview-wrap">
+                    <label for="profile-image-zoom">Crop Preview</label>
+                    <canvas id="profile-crop-preview" width="180" height="180"></canvas>
+                    <input id="profile-image-zoom" type="range" min="1" max="3" step="0.05" value="1">
+                </div>
+                <button class="btn btn-sm" type="submit">Upload Picture</button>
+            </form>
+            {% if current_user.profile_image %}
+            <form method="POST" action="{{ url_for('delete_profile_image') }}" onsubmit="return confirm('Remove profile picture?');">
+                <button class="btn btn-sm danger" type="submit">Remove Picture</button>
+            </form>
+            {% endif %}
+        </div>
+
+        <div class="card-block profile-card">
+            <h3>Personal Details</h3>
+            <form method="POST" action="{{ url_for('update_profile') }}">
+                <label>Phone</label>
+                <input type="text" name="phone" value="{{ current_user.phone or '' }}" placeholder="+234...">
+
+                <label>Location</label>
+                <input type="text" name="location" value="{{ current_user.location or '' }}" placeholder="Lagos, Nigeria">
+
+                <label>Education Level</label>
+                <select name="education_level">
+                    <option value="">Select</option>
+                    <option {% if current_user.education_level == "OND/HND" %}selected{% endif %}>OND/HND</option>
+                    <option {% if current_user.education_level == "BSc" %}selected{% endif %}>BSc</option>
+                    <option {% if current_user.education_level == "MSc" %}selected{% endif %}>MSc</option>
+                    <option {% if current_user.education_level == "PhD" %}selected{% endif %}>PhD</option>
+                </select>
+
+                <label>Years of Experience</label>
+                <input type="number" name="years_experience" min="0" value="{{ current_user.years_experience or 0 }}">
+
+                <label>Professional Summary</label>
+                <textarea name="bio" rows="4">{{ current_user.bio or '' }}</textarea>
+
+                <button class="btn" type="submit">Save Profile</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card-block profile-card">
+        <h3>CV Management</h3>
+        <form method="POST" action="{{ url_for('upload_cv') }}" enctype="multipart/form-data">
+            <input type="file" name="cv_file" accept=".pdf,.doc,.docx" required>
+            <button class="btn btn-sm" type="submit">Upload CV</button>
+        </form>
+        {% if current_user.cv_filename %}
+            <p>Current CV: <a href="{{ url_for('my_cv') }}">{{ current_user.cv_filename }}</a></p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="card-block" id="my-applications">
+    <h2>My Applications</h2>
+    {% if applications %}
+    <table>
+        <tr>
+            <th>Vacancy</th>
+            <th>Qualification</th>
+            <th>Experience</th>
+            <th>Auto Score</th>
+            <th>Assessment Score</th>
+            <th>Current Stage</th>
+        </tr>
+        {% for item in applications %}
+        <tr>
+            <td data-label="Vacancy">{{ item.job.title }}</td>
+            <td data-label="Qualification">{{ item.qualification }}</td>
+            <td data-label="Experience">{{ item.experience }} years</td>
+            <td data-label="Auto Score">{{ item.score }}</td>
+            <td data-label="Assessment Score">{{ item.assessment_score if item.assessment_score is not none else "-" }}</td>
+            <td data-label="Current Stage">{{ item.review_status|capitalize }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <p>You haven't applied for any vacancies yet.</p>
+        <a href="{{ url_for('jobs') }}">Browse Vacancies</a>
+    </div>
+    {% endif %}
+</section>
+
+<section class="card-block">
+    <h2>Profile Deletion</h2>
+    <p>If you no longer want to use this account, you can permanently delete your profile and all application records.</p>
+    <form method="POST" action="{{ url_for('delete_account') }}" onsubmit="return confirm('Delete your profile permanently? This cannot be undone.');">
+        <button type="submit" class="btn danger">Delete My Profile</button>
+    </form>
+</section>
+{% endblock %}

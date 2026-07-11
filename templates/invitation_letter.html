@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ invitation_type }} Letter - APP-{{ "%06d"|format(application.id) }}</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: "Times New Roman", serif;
+            color: #111;
+            background: #f8f8f8;
+        }
+        .sheet {
+            max-width: 820px;
+            margin: 0 auto;
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 34px 38px;
+            line-height: 1.55;
+        }
+        h1 {
+            margin: 0 0 6px;
+            font-size: 26px;
+        }
+        .muted {
+            color: #555;
+            font-size: 14px;
+        }
+        .meta {
+            margin: 16px 0 24px;
+        }
+        .meta div {
+            margin: 4px 0;
+        }
+        .actions {
+            max-width: 820px;
+            margin: 12px auto 0;
+            display: flex;
+            gap: 8px;
+        }
+        button {
+            border: 1px solid #444;
+            background: #fff;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+            .sheet {
+                border: 0;
+                max-width: none;
+                margin: 0;
+                padding: 0;
+            }
+            .actions {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <article class="sheet">
+        <h1>Invitation Letter</h1>
+        <div class="muted">Generated: {{ generated_at }}</div>
+        <div class="meta">
+            <div><strong>Reference:</strong> APP-{{ "%06d"|format(application.id) }}</div>
+            <div><strong>Vacancy:</strong> {{ application.job.title }}</div>
+            <div><strong>Candidate Name:</strong> {{ application.user.fullname }}</div>
+            <div><strong>Candidate Email:</strong> {{ application.user.email }}</div>
+            <div><strong>Invitation Type:</strong> {{ invitation_type }}</div>
+            <div><strong>Date:</strong> {{ interview_date }}</div>
+            <div><strong>Time:</strong> {{ interview_time }}</div>
+            <div><strong>Venue:</strong> {{ venue }}</div>
+        </div>
+
+        <p>Dear {{ application.user.fullname }},</p>
+        <p>
+            You are invited for a {{ invitation_type.lower() }} for the position of
+            <strong>{{ application.job.title }}</strong>.
+        </p>
+        <p>
+            Kindly report to <strong>{{ venue }}</strong> on
+            <strong>{{ interview_date }}</strong> at <strong>{{ interview_time }}</strong>.
+            Please arrive at least 15 minutes before your scheduled time and come with a valid means of identification.
+        </p>
+        <p>
+            We look forward to meeting you.
+        </p>
+        <p>
+            Regards,<br>
+            Interview Panel<br>
+            Staff Selection Management Platform
+        </p>
+    </article>
+    <div class="actions">
+        <button type="button" onclick="window.print()">Print / Save as PDF</button>
+        <button type="button" onclick="window.close()">Close</button>
+    </div>
+</body>
+</html>

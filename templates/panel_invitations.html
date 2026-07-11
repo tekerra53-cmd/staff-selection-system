@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Panel Invitation Center</h1>
+    <p>Select a shortlisted candidate name to prepare an invitation, or send to multiple shortlisted candidates for the same vacancy.</p>
+</section>
+
+<section class="card-block">
+    <form class="job-search-bar" method="GET" action="{{ url_for('panel_invitations') }}">
+        <select name="vacancy_id" required>
+            <option value="">Select Vacancy</option>
+            {% for vacancy in vacancy_options %}
+                <option value="{{ vacancy.id }}" {% if selected_vacancy_id == vacancy.id %}selected{% endif %}>{{ vacancy.title }}</option>
+            {% endfor %}
+        </select>
+        <button class="btn" type="submit">Load Shortlisted</button>
+        <a class="btn btn-outline" href="{{ url_for('panel_invitations') }}">Clear</a>
+    </form>
+</section>
+
+{% if selected_vacancy_id %}
+<section class="card-block">
+    <h2>Shortlisted Names</h2>
+    {% if shortlisted_applications %}
+        <p>
+            {% for item in shortlisted_applications %}
+                <a
+                    class="btn btn-sm {% if selected_application_id != item.id %}btn-outline{% endif %}"
+                    href="{{ url_for('panel_invitations', vacancy_id=selected_vacancy_id, application_id=item.id) }}"
+                >
+                    {{ item.user.fullname }}
+                </a>
+            {% endfor %}
+        </p>
+    {% else %}
+        <p>No shortlisted candidates found for this vacancy.</p>
+    {% endif %}
+</section>
+
+{% if shortlisted_applications %}
+<section class="card-block">
+    <h2>Prepare Invitation</h2>
+    {% if selected_application %}
+    <p>
+        Selected Candidate:
+        <strong>{{ selected_application.user.fullname }}</strong>
+        ({{ selected_application.user.email }}) - APP-{{ "%06d"|format(selected_application.id) }}
+    </p>
+    {% endif %}
+    <form method="POST" action="{{ url_for('panel_invitations') }}">
+        <input type="hidden" name="vacancy_id" value="{{ selected_vacancy_id }}">
+        <input type="hidden" name="application_id" value="{{ selected_application_id or '' }}">
+
+        <label>Invitation Type</label>
+        <select name="invitation_type" required>
+            <option value="Interview">Interview</option>
+            <option value="Physical Assessment">Physical Assessment</option>
+        </select>
+
+        <label>Interview Date</label>
+        <input type="date" name="interview_date" required>
+
+        <label>Interview Time</label>
+        <input type="time" name="interview_time" required>
+
+        <label>Venue</label>
+        <input type="text" name="venue" placeholder="e.g. UBA HQ, Interview Hall">
+
+        <h3>Send To Shortlisted Candidates (Same Vacancy)</h3>
+        <table>
+            <tr>
+                <th>Select</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Application ID</th>
+            </tr>
+            {% for item in shortlisted_applications %}
+            <tr>
+                <td data-label="Select">
+                    <input
+                        type="checkbox"
+                        name="application_ids"
+                        value="{{ item.id }}"
+                        {% if selected_application_id == item.id %}checked{% endif %}
+                    >
+                </td>
+                <td data-label="Name">{{ item.user.fullname }}</td>
+                <td data-label="Email">{{ item.user.email }}</td>
+                <td data-label="Application ID">APP-{{ "%06d"|format(item.id) }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <div class="form-actions">
+            <button class="btn" type="submit">Send Invitation</button>
+            {% if selected_application %}
+            <button
+                class="btn btn-outline"
+                type="submit"
+                formaction="{{ url_for('invitation_letter', application_id=selected_application.id) }}"
+                formmethod="GET"
+                formtarget="_blank"
+            >
+                Preview/Print Selected Letter
+            </button>
+            {% endif %}
+        </div>
+    </form>
+</section>
+{% endif %}
+{% endif %}
+{% endblock %}

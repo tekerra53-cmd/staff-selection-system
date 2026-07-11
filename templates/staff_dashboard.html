@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-header">
+    <h1>{{ dashboard_title }}</h1>
+    <p>{{ dashboard_subtitle }}</p>
+    {% if can_shortlist %}
+    <p><a class="btn" href="{{ url_for('create_job') }}">Create New Vacancy</a></p>
+    {% endif %}
+</section>
+
+{% if can_shortlist %}
+<section class="card-block">
+    <h2>All Vacancies</h2>
+    {% if jobs %}
+    <table>
+        <tr>
+            <th>Title</th>
+            <th>Department</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        {% for job in jobs %}
+        <tr>
+            <td data-label="Title">{{ job.title }}</td>
+            <td data-label="Department">{{ job.department }}</td>
+            <td data-label="Status">{{ "Active" if job.is_active else "Closed" }}</td>
+            <td data-label="Actions">
+                <a class="btn btn-sm btn-outline" href="{{ url_for('edit_job', job_id=job.id) }}">Edit</a>
+                <form method="POST" action="{{ url_for('toggle_job_status', job_id=job.id) }}">
+                    <button class="btn btn-sm {% if job.is_active %}danger{% endif %}" type="submit">
+                        {{ "Close" if job.is_active else "Reopen" }}
+                    </button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No vacancies posted yet.</p>
+    {% endif %}
+</section>
+{% endif %}
+
+<section class="card-block">
+    <h2>Application Pipeline</h2>
+    <p>
+        {% if can_shortlist %}
+        <a class="btn btn-sm {% if active_status not in ['pending', 'under_review'] %}btn-outline{% endif %}" href="{{ url_for(dashboard_route, status='under_review', department=selected_department, cv_status=selected_cv_status, vacancy_id=selected_vacancy_id) }}">Under Review ({{ pipeline_counts.under_review }})</a>
+        {% endif %}
+        <a class="btn btn-sm {% if active_status != 'shortlisted' %}btn-outline{% endif %}" href="{{ url_for(dashboard_route, status='shortlisted', department=selected_department, cv_status=selected_cv_status, vacancy_id=selected_vacancy_id) }}">Shortlisted ({{ pipeline_counts.shortlisted }})</a>
+        <a class="btn btn-sm {% if active_status != 'assessed' %}btn-outline{% endif %}" href="{{ url_for(dashboard_route, status='assessed', department=selected_department, cv_status=selected_cv_status, vacancy_id=selected_vacancy_id) }}">Assessed ({{ pipeline_counts.assessed }})</a>
+        <a class="btn btn-sm {% if active_status != 'accepted' %}btn-outline{% endif %}" href="{{ url_for(dashboard_route, status='accepted', department=selected_department, cv_status=selected_cv_status, vacancy_id=selected_vacancy_id) }}">Selected ({{ pipeline_counts.accepted }})</a>
+        <a class="btn btn-sm {% if active_status != 'rejected' %}btn-outline{% endif %}" href="{{ url_for(dashboard_route, status='rejected', department=selected_department, cv_status=selected_cv_status, vacancy_id=selected_vacancy_id) }}">Rejected ({{ pipeline_counts.rejected }})</a>
+    </p>
+    <form class="job-search-bar" method="GET" action="{{ url_for(dashboard_route) }}">
+        <input type="hidden" name="status" value="{{ active_status }}">
+        <select name="vacancy_id">
+            <option value="">All Vacancies</option>
+            {% for vacancy in vacancy_options %}
+                <option value="{{ vacancy.id }}" {% if selected_vacancy_id == vacancy.id %}selected{% endif %}>{{ vacancy.title }}</option>
+            {% endfor %}
+        </select>
+        <select name="department">
+            <option value="">All Departments</option>
+            {% for dep in departments %}
+                <option value="{{ dep }}" {% if dep == selected_department %}selected{% endif %}>{{ dep }}</option>
+            {% endfor %}
+        </select>
+        <select name="cv_status">
+            <option value="all" {% if selected_cv_status == "all" %}selected{% endif %}>All CV Status</option>
+            <option value="uploaded" {% if selected_cv_status == "uploaded" %}selected{% endif %}>CV Uploaded</option>
+            <option value="missing" {% if selected_cv_status == "missing" %}selected{% endif %}>CV Missing</option>
+        </select>
+        <button class="btn" type="submit">Apply Filters</button>
+        <a class="btn btn-outline" href="{{ url_for(dashboard_route, status=active_status) }}">Clear</a>
+    </form>
+    {% if can_bulk %}
+    <form method="POST" action="{{ url_for('bulk_update_applications') }}" id="bulk-action-form" class="bulk-actions">
+        <input type="hidden" name="status" value="{{ active_status }}">
+        <input type="hidden" name="department" value="{{ selected_department }}">
+        <input type="hidden" name="cv_status" value="{{ selected_cv_status }}">
+        <input type="hidden" name="vacancy_id" value="{{ selected_vacancy_id or '' }}">
+        <select name="bulk_action" required>
+            <option value="">Bulk Action</option>
+            <option value="shortlist">Shortlist Selected</option>
+            <option value="reject">Reject Selected</option>
+        </select>
+        <button class="btn btn-sm" type="submit">Apply to Selected</button>
+    </form>
+    {% endif %}
+    {% if applications %}
+    <table>
+        <tr>
+            {% if can_bulk %}<th><input type="checkbox" id="select-all-applications"></th>{% endif %}
+            <th>Applicant</th>
+            <th>Email</th>
+            <th>Vacancy</th>
+            <th>Auto Score</th>
+            <th>Score Breakdown</th>
+            <th>Assessment</th>
+            <th>Stage</th>
+            <th>CV</th>
+            <th>Actions</th>
+        </tr>
+        {% for item in applications %}
+        <tr>
+            {% if can_bulk %}
+            <td data-label="Select"><input type="checkbox" class="bulk-application-check" name="application_ids" value="{{ item.id }}" form="bulk-action-form"></td>
+            {% endif %}
+            <td data-label="Applicant">
+                {% if can_invite and item.review_status == "shortlisted" %}
+                    <a href="{{ url_for('panel_invitations', vacancy_id=item.job_id, application_id=item.id) }}">{{ item.user.fullname }}</a>
+                {% else %}
+                    {{ item.user.fullname }}
+                {% endif %}
+            </td>
+            <td data-label="Email">{{ item.user.email }}</td>
+            <td data-label="Vacancy">{{ item.job.title }}</td>
+            <td data-label="Auto Score">{{ item.score }} ({{ item.auto_status }})</td>
+            <td data-label="Score Breakdown">{{ score_breakdowns.get(item.id, "N/A") }}</td>
+            <td data-label="Assessment">
+                {% if item.assessment_score is not none %}
+                    {{ item.assessment_score }}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td data-label="Stage">{% if item.review_status in ["pending", "under_review"] %}Under Review{% else %}{{ item.review_status|capitalize }}{% endif %}</td>
+            <td data-label="CV">
+                {% if item.user.cv_filename %}
+                <a class="btn btn-sm btn-outline" href="{{ url_for('application_cv', application_id=item.id) }}" target="_blank">Review CV</a>
+                {% else %}
+                Not Uploaded
+                {% endif %}
+            </td>
+            <td data-label="Actions">
+                {% if can_shortlist and item.review_status in ["pending", "under_review"] %}
+                    <form method="POST" action="{{ url_for('shortlist_application', application_id=item.id) }}">
+                        <button class="btn btn-sm" type="submit">Shortlist</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('reject_application', application_id=item.id) }}">
+                        <button class="btn btn-sm danger" type="submit">Reject</button>
+                    </form>
+                {% elif item.review_status in ["shortlisted", "assessed"] %}
+                    {% if can_invite and item.review_status == "shortlisted" %}
+                    <a class="btn btn-sm btn-outline" href="{{ url_for('panel_invitations', vacancy_id=item.job_id, application_id=item.id) }}">Open Invitation Center</a>
+                    {% endif %}
+                    {% if can_assess %}
+                    <form method="POST" action="{{ url_for('assess_application', application_id=item.id) }}">
+                        <input type="number" name="assessment_score" min="0" max="100" placeholder="0-100" required>
+                        <input type="text" name="assessment_remark" placeholder="Assessment remark (optional)">
+                        <button class="btn btn-sm" type="submit">Save Assessment</button>
+                    </form>
+                    {% endif %}
+                    {% if can_decide %}
+                    <form method="POST" action="{{ url_for('review_application', application_id=item.id) }}">
+                        <button class="btn btn-sm" type="submit" name="decision" value="accepted">Select</button>
+                        <button class="btn btn-sm danger" type="submit" name="decision" value="rejected">Reject</button>
+                    </form>
+                    {% endif %}
+                {% else %}
+                    Finalized
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No applications in this status.</p>
+    {% endif %}
+</section>
+
+{% if selected_vacancy_id %}
+<section class="card-block">
+    <h2>All Submitted Applications For Selected Vacancy</h2>
+    {% if vacancy_applications %}
+    <table>
+        <tr>
+            <th>Applicant Name</th>
+            <th>Application ID</th>
+            <th>Qualification Summary</th>
+            <th>Score Breakdown</th>
+            <th>Submission Date</th>
+        </tr>
+        {% for item in vacancy_applications %}
+        <tr>
+            <td data-label="Applicant Name">{{ item.user.fullname }}</td>
+            <td data-label="Application ID">APP-{{ "%06d"|format(item.id) }}</td>
+            <td data-label="Qualification Summary">{{ item.qualification }}, {{ item.experience }} years exp, auto score {{ item.score }}</td>
+            <td data-label="Score Breakdown">{{ score_breakdowns.get(item.id, "N/A") }}</td>
+            <td data-label="Submission Date">{{ item.created_at.strftime("%Y-%m-%d %H:%M:%S UTC") }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No applications submitted for this vacancy yet.</p>
+    {% endif %}
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Vacancy Listings</h1>
+    <p>Explore open roles, filter by department/location/type, and apply with one click.</p>
+</section>
+
+<form class="job-search-bar jobs-filter-bar" method="GET" action="{{ url_for('jobs') }}">
+    <input type="text" name="q" value="{{ keyword }}" placeholder="Search by title or keyword...">
+    <select name="department">
+        <option value="">All Departments</option>
+        {% for dep in departments %}
+            <option value="{{ dep }}" {% if dep == selected_department %}selected{% endif %}>{{ dep }}</option>
+        {% endfor %}
+    </select>
+    <select name="location">
+        <option value="">All Locations</option>
+        {% for city in locations %}
+            <option value="{{ city }}" {% if city == selected_location %}selected{% endif %}>{{ city }}</option>
+        {% endfor %}
+    </select>
+    <select name="type">
+        <option value="">All Types</option>
+        {% for item in types %}
+            <option value="{{ item }}" {% if item == selected_type %}selected{% endif %}>{{ item }}</option>
+        {% endfor %}
+    </select>
+    <button class="btn" type="submit">Search</button>
+    <a class="btn btn-outline" href="{{ url_for('jobs') }}">Clear</a>
+</form>
+
+<section class="vacancy-list">
+    {% if jobs %}
+        {% for job in jobs %}
+        <article class="vacancy-card vacancy-card-modern">
+            <div class="vacancy-head">
+                <div>
+                    <h3>{{ job.title }}</h3>
+                    <p class="meta">{{ job.department }}</p>
+                </div>
+                <span class="tag">Open</span>
+            </div>
+
+            <div class="vacancy-meta-grid">
+                <div><strong>Location:</strong> {{ job.location }}</div>
+                <div><strong>Type:</strong> {{ job.employment_type }}</div>
+                <div><strong>Experience:</strong> {{ job.min_experience }}+ years</div>
+                <div>
+                    <strong>Salary:</strong>
+                    {% if job.salary_min and job.salary_max %}
+                        &#8358;{{ "{:,}".format(job.salary_min) }} - &#8358;{{ "{:,}".format(job.salary_max) }}
+                    {% else %}
+                        Negotiable
+                    {% endif %}
+                </div>
+                <div>
+                    <strong>Deadline:</strong>
+                    {% if job.deadline %}
+                        {{ job.deadline.strftime('%m/%d/%Y') }}
+                    {% else %}
+                        Open until filled
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="rich-text">{{ job.description|richtext }}</div>
+
+            <div class="vacancy-actions">
+                {% if current_user.is_authenticated and current_user.role == "user" %}
+                    <a class="btn btn-sm" href="{{ url_for('apply_for_job', job_id=job.id) }}">View Details & Apply</a>
+                    {% if job.id in saved_job_ids %}
+                    <form method="POST" action="{{ url_for('unsave_job', job_id=job.id, q=keyword, department=selected_department, location=selected_location, type=selected_type) }}">
+                        <button class="btn btn-sm btn-outline" type="submit">Saved</button>
+                    </form>
+                    {% else %}
+                    <form method="POST" action="{{ url_for('save_job', job_id=job.id, q=keyword, department=selected_department, location=selected_location, type=selected_type) }}">
+                        <button class="btn btn-sm btn-outline" type="submit">Save Vacancy</button>
+                    </form>
+                    {% endif %}
+                {% elif current_user.is_authenticated %}
+                    <a class="btn btn-sm btn-outline" href="{{ url_for('dashboard') }}">Dashboard</a>
+                {% else %}
+                    <a class="btn btn-sm" href="{{ url_for('login') }}">View Details & Apply</a>
+                    <a class="btn btn-sm btn-outline" href="{{ url_for('login') }}">Login to Apply</a>
+                {% endif %}
+            </div>
+        </article>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <p>No vacancies currently match your search.</p>
+            <a href="{{ url_for('jobs') }}">Reset Filters</a>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

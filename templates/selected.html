@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Selected Candidates Report</h1>
+    <p>Applicants marked as selected after shortlisting, assessment, and final review.</p>
+    <p><a class="btn btn-sm" href="{{ url_for('selected_csv') }}">Export CSV</a></p>
+</section>
+
+<section class="card-block">
+    {% if applications %}
+    <table>
+        <tr>
+            <th>Applicant</th>
+            <th>Email</th>
+            <th>Vacancy</th>
+            <th>Department</th>
+            <th>Auto Score</th>
+            <th>Assessment Score</th>
+            <th>Assessment Remark</th>
+        </tr>
+        {% for item in applications %}
+        <tr>
+            <td data-label="Applicant">{{ item.user.fullname }}</td>
+            <td data-label="Email">{{ item.user.email }}</td>
+            <td data-label="Vacancy">{{ item.job.title }}</td>
+            <td data-label="Department">{{ item.job.department }}</td>
+            <td data-label="Auto Score">{{ item.score }}</td>
+            <td data-label="Assessment Score">{{ item.assessment_score if item.assessment_score is not none else "-" }}</td>
+            <td data-label="Assessment Remark">{{ item.assessment_remark or "-" }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No selected candidates yet.</p>
+    {% endif %}
+</section>
+{% endblock %}

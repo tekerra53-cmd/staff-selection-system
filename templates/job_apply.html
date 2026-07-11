@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Apply for {{ job.title }}</h1>
+    <p>{{ job.department }} | {{ job.location }} | {{ job.employment_type }}</p>
+    <p>
+        Experience Required: {{ job.min_experience }}+ years
+        {% if job.salary_min and job.salary_max %}
+        | Salary: &#8358;{{ "{:,}".format(job.salary_min) }} - &#8358;{{ "{:,}".format(job.salary_max) }}
+        {% endif %}
+    </p>
+    <div class="rich-text">{{ job.description|richtext }}</div>
+</section>
+<section class="card-block">
+    <form method="POST">
+        <label>Qualification</label>
+        <select name="qualification">
+            <option>OND/HND</option>
+            <option>BSc</option>
+            <option>MSc</option>
+            <option>PhD</option>
+        </select>
+
+        <label>Years of Experience</label>
+        <input type="number" name="experience" min="0" value="{{ current_user.years_experience or 0 }}" required>
+
+        <button type="submit">Submit Application</button>
+    </form>
+</section>
+{% endblock %}

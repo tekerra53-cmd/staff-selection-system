@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+    <span class="hero-kicker">Now Hiring</span>
+    <h1><span>Web-Based Staff Selection Process System</span></h1>
+    <p>
+        A complete staff selection platform designed for structured recruitment workflow,
+        transparent tracking, and secure handling of applicant records.
+    </p>
+    <div class="hero-actions">
+        <a class="btn btn-yellow" href="{{ url_for('jobs') }}">View Vacancies</a>
+        {% if current_user.is_authenticated %}
+            <a class="btn btn-outline-light" href="{{ url_for('dashboard') }}">Open Dashboard</a>
+        {% else %}
+            <a class="btn btn-outline-light" href="{{ url_for('register') }}">Create Account</a>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section section-process">
+    <h2>Selection Workflow Implemented</h2>
+    <p class="section-sub">Designed around vacancy management, application capture, shortlisting, assessment, and final decision reporting.</p>
+    <div class="process-grid">
+        <article class="process-card">
+            <span class="step">01</span>
+            <h3>Vacancy Creation</h3>
+            <p>HR/Admin creates and manages job openings with role requirements and deadlines.</p>
+        </article>
+        <article class="process-card">
+            <span class="step">02</span>
+            <h3>Application Submission</h3>
+            <p>Applicants register, complete profiles, upload CVs, and submit applications online.</p>
+        </article>
+        <article class="process-card">
+            <span class="step">03</span>
+            <h3>Shortlisting & Review</h3>
+            <p>Applications are screened and tracked with status updates for fair and structured processing.</p>
+        </article>
+        <article class="process-card">
+            <span class="step">04</span>
+            <h3>Evaluation & Reporting</h3>
+            <p>Review outcomes are recorded and summary outputs support final selection decisions.</p>
+        </article>
+    </div>
+</section>
+
+<section class="section why-uba">
+    <div>
+        <h2>Project Scope Highlights</h2>
+        <ul class="benefits">
+            <li>Authentication and role-based access control (Applicant, Staff, Admin)</li>
+            <li>Vacancy posting and centralized application records</li>
+            <li>Shortlisting support with measurable application data</li>
+            <li>Assessment decision tracking with accepted/rejected outcomes</li>
+            <li>Reporting views for shortlisted and selected candidates</li>
+        </ul>
+    </div>
+    <div class="metrics">
+        <div><strong>5</strong><span>Core Modules</span></div>
+        <div><strong>RBAC</strong><span>Access Control</span></div>
+        <div><strong>Web</strong><span>Flask Platform</span></div>
+        <div><strong>Secure</strong><span>Applicant Data Focus</span></div>
+    </div>
+</section>
+
+<section class="section cta-band">
+    <h2>Test the End-to-End Selection Pipeline</h2>
+    <p>Use the portal to post vacancies, submit applications, review candidates, and produce selection outputs.</p>
+    <div class="hero-actions">
+        <a class="btn" href="{{ url_for('jobs') }}">Browse Vacancies</a>
+        {% if current_user.is_authenticated %}
+            <a class="btn btn-outline-light" href="{{ url_for('dashboard') }}">Go to Dashboard</a>
+        {% else %}
+            <a class="btn btn-outline-light" href="{{ url_for('register') }}">Sign Up</a>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section jobs-preview">
+    <h2>Current Vacancies</h2>
+    {% if jobs %}
+    <div class="job-cards">
+        {% for job in jobs[:4] %}
+        <article class="job-card">
+            <h3>{{ job.title }}</h3>
+            <p class="meta">{{ job.department }}</p>
+            <p>{{ job.description|plain_excerpt(140) }}</p>
+            <a class="btn btn-sm" href="{{ url_for('apply_for_job', job_id=job.id) }}">Apply</a>
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No active vacancies yet.</p>
+    {% endif %}
+</section>
+{% endblock %}

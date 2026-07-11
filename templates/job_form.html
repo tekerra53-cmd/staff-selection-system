@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-header">
+    <h1>{{ "Edit Vacancy" if edit_mode else "Create Vacancy Posting" }}</h1>
+    <p>{{ "Update vacancy details and keep requirements accurate." if edit_mode else "Enter clear role requirements so shortlisting and assessment remain consistent." }}</p>
+</section>
+
+<section class="card-block vacancy-form-wrap">
+    <form method="POST" class="vacancy-form">
+        <div class="vacancy-form-grid">
+            <div class="field-group field-wide">
+                <label for="title">Vacancy Title</label>
+                <input id="title" type="text" name="title" placeholder="e.g. Relationship Manager - Corporate Banking" value="{{ job.title if job else '' }}" required>
+            </div>
+
+            <div class="field-group">
+                <label for="department">Department</label>
+                <input id="department" type="text" name="department" list="department-options" placeholder="Select or type department" value="{{ job.department if job else '' }}" required>
+                <datalist id="department-options">
+                    <option value="Operations"></option>
+                    <option value="Corporate Banking"></option>
+                    <option value="Retail Banking"></option>
+                    <option value="Information Technology"></option>
+                    <option value="Risk Management"></option>
+                    <option value="Human Resources"></option>
+                    <option value="Finance"></option>
+                    <option value="Compliance"></option>
+                    <option value="Customer Experience"></option>
+                </datalist>
+                <small class="field-note">Department is required and used in filtering/reporting.</small>
+            </div>
+
+            <div class="field-group">
+                <label for="employment_type">Employment Type</label>
+                <select id="employment_type" name="employment_type">
+                    <option {% if not job or job.employment_type == "Full-time" %}selected{% endif %}>Full-time</option>
+                    <option {% if job and job.employment_type == "Part-time" %}selected{% endif %}>Part-time</option>
+                    <option {% if job and job.employment_type == "Contract" %}selected{% endif %}>Contract</option>
+                    <option {% if job and job.employment_type == "Internship" %}selected{% endif %}>Internship</option>
+                    <option {% if job and job.employment_type == "Graduate Program" %}selected{% endif %}>Graduate Program</option>
+                </select>
+            </div>
+
+            <div class="field-group">
+                <label for="location">Location</label>
+                <input id="location" type="text" name="location" value="{{ job.location if job else 'Lagos, Nigeria' }}">
+            </div>
+
+            <div class="field-group">
+                <label for="min_experience">Minimum Experience (Years)</label>
+                <input id="min_experience" type="number" name="min_experience" min="0" value="{{ job.min_experience if job else 0 }}">
+            </div>
+
+            <div class="field-group">
+                <label for="salary_min">Salary Min (NGN)</label>
+                <input id="salary_min" type="number" name="salary_min" min="0" value="{{ job.salary_min if job and job.salary_min is not none else '' }}">
+            </div>
+
+            <div class="field-group">
+                <label for="salary_max">Salary Max (NGN)</label>
+                <input id="salary_max" type="number" name="salary_max" min="0" value="{{ job.salary_max if job and job.salary_max is not none else '' }}">
+            </div>
+
+            <div class="field-group">
+                <label for="deadline">Application Deadline</label>
+                <input id="deadline" type="date" name="deadline" value="{{ job.deadline.strftime('%Y-%m-%d') if job and job.deadline else '' }}">
+            </div>
+
+            <div class="field-group field-wide">
+                <label for="description-editor">Role Description</label>
+                <div class="editor-toolbar" role="toolbar" aria-label="Role description formatting">
+                    <select class="editor-select" data-editor-command="fontName" title="Font Family" aria-label="Font Family">
+                        <option value="Segoe UI">Segoe UI</option>
+                        <option value="Arial">Arial</option>
+                        <option value="Calibri">Calibri</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Georgia">Georgia</option>
+                    </select>
+                    <select class="editor-select" data-editor-command="fontSize" title="Font Size" aria-label="Font Size">
+                        <option value="2">Small</option>
+                        <option value="3" selected>Normal</option>
+                        <option value="4">Large</option>
+                        <option value="5">X-Large</option>
+                    </select>
+                    <input type="color" class="editor-color" data-editor-command="foreColor" value="#111827" title="Text Color" aria-label="Text Color">
+                    <input type="color" class="editor-color" data-editor-command="hiliteColor" value="#fff59d" title="Highlight Color" aria-label="Highlight Color">
+                    <span class="editor-sep" aria-hidden="true"></span>
+                    <button type="button" class="editor-btn" data-editor-command="bold" title="Bold"><strong>B</strong></button>
+                    <button type="button" class="editor-btn" data-editor-command="italic" title="Italic"><em>I</em></button>
+                    <button type="button" class="editor-btn" data-editor-command="underline" title="Underline"><u>U</u></button>
+                    <button type="button" class="editor-btn" data-editor-command="strikeThrough" title="Strikethrough"><s>S</s></button>
+                    <span class="editor-sep" aria-hidden="true"></span>
+                    <button type="button" class="editor-btn" data-editor-command="justifyLeft" title="Align Left">Left</button>
+                    <button type="button" class="editor-btn" data-editor-command="justifyCenter" title="Align Center">Center</button>
+                    <button type="button" class="editor-btn" data-editor-command="justifyRight" title="Align Right">Right</button>
+                    <span class="editor-sep" aria-hidden="true"></span>
+                    <button type="button" class="editor-btn" data-editor-command="insertUnorderedList" title="Bullet List">Bullet</button>
+                    <button type="button" class="editor-btn" data-editor-command="insertOrderedList" title="Numbered List">Number</button>
+                    <button type="button" class="editor-btn" data-editor-command="outdent" title="Decrease Indent">Outdent</button>
+                    <button type="button" class="editor-btn" data-editor-command="indent" title="Increase Indent">Indent</button>
+                    <button type="button" class="editor-btn" data-editor-command="createLink" title="Insert Link">Link</button>
+                    <button type="button" class="editor-btn" data-editor-command="removeFormat" title="Clear Formatting">Clear</button>
+                </div>
+                <div id="description-editor" class="rich-editor" contenteditable="true" aria-label="Role description editor"></div>
+                <textarea id="description" name="description" class="editor-source" hidden>{{ job.description if job else '' }}</textarea>
+                <small class="field-note">Use the toolbar to format text directly. No markdown symbols required.</small>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button class="btn" type="submit">{{ "Save Changes" if edit_mode else "Publish Vacancy" }}</button>
+            <a class="btn btn-outline" href="{{ url_for('staff_dashboard') }}">Cancel</a>
+        </div>
+    </form>
+</section>
+
+<script>
+(() => {
+    const form = document.querySelector(".vacancy-form");
+    const sourceField = document.getElementById("description");
+    const editor = document.getElementById("description-editor");
+    const toolbar = document.querySelector(".editor-toolbar");
+    if (!form || !sourceField || !editor || !toolbar) return;
+    document.execCommand("styleWithCSS", false, true);
+
+    const initialValue = sourceField.value.trim();
+    const looksLikeHtml = /<\/?[a-z][\s\S]*>/i.test(initialValue);
+    if (initialValue) {
+        if (looksLikeHtml) {
+            editor.innerHTML = initialValue;
+        } else {
+            editor.textContent = initialValue;
+        }
+    }
+
+    const syncToSource = () => {
+        const html = editor.innerHTML.trim();
+        const plain = editor.textContent.trim();
+        sourceField.value = plain ? html : "";
+    };
+
+    editor.addEventListener("input", syncToSource);
+
+    form.addEventListener("submit", (event) => {
+        syncToSource();
+        if (!editor.textContent.trim()) {
+            event.preventDefault();
+            window.alert("Role description is required.");
+            editor.focus();
+        }
+    });
+
+    toolbar.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-editor-command]");
+        if (!button) return;
+        if (button.tagName !== "BUTTON") return;
+        event.preventDefault();
+        editor.focus();
+
+        const command = button.getAttribute("data-editor-command");
+        if (command === "createLink") {
+            const url = window.prompt("Enter URL (include https://):", "https://");
+            if (!url) return;
+            document.execCommand("createLink", false, url);
+        } else {
+            document.execCommand(command, false, null);
+        }
+        syncToSource();
+    });
+
+    toolbar.addEventListener("change", (event) => {
+        const control = event.target.closest("[data-editor-command]");
+        if (!control) return;
+        const command = control.getAttribute("data-editor-command");
+        const value = control.value;
+        editor.focus();
+        document.execCommand(command, false, value);
+        syncToSource();
+    });
+
+    syncToSource();
+})();
+</script>
+{% endblock %}

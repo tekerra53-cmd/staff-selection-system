@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Audit Log</h1>
+    <p>System activity trail for accountability and traceability.</p>
+</section>
+
+<section class="card-block">
+    <form method="GET" class="job-search-bar" action="{{ url_for('audit_logs') }}">
+        <select name="action">
+            <option value="">All Actions</option>
+            {% for action in actions %}
+                <option value="{{ action }}" {% if action == selected_action %}selected{% endif %}>{{ action }}</option>
+            {% endfor %}
+        </select>
+        <input type="date" name="start_date" value="{{ start_date }}">
+        <input type="date" name="end_date" value="{{ end_date }}">
+        <button class="btn" type="submit">Filter</button>
+        <a class="btn btn-outline" href="{{ url_for('audit_logs') }}">Clear</a>
+    </form>
+
+    {% if logs %}
+    <table>
+        <tr>
+            <th>Time</th>
+            <th>User</th>
+            <th>Action</th>
+            <th>Entity</th>
+            <th>Details</th>
+            <th>IP</th>
+        </tr>
+        {% for log in logs %}
+        <tr>
+            <td data-label="Time">{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            <td data-label="User">{{ log.user.email if log.user else "system" }}</td>
+            <td data-label="Action">{{ log.action }}</td>
+            <td data-label="Entity">
+                {% if log.entity_type %}
+                    {{ log.entity_type }}{% if log.entity_id %} #{{ log.entity_id }}{% endif %}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td data-label="Details">{{ log.details or "-" }}</td>
+            <td data-label="IP">{{ log.ip_address or "-" }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No activity logs available yet.</p>
+    {% endif %}
+</section>
+{% endblock %}

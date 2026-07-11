@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Application Submission Confirmation</h1>
+    <p>Your application has been received successfully.</p>
+</section>
+
+<section class="card-block">
+    <div class="vacancy-meta-grid">
+        <div><strong>Application Reference / ID:</strong> APP-{{ "%06d"|format(application.id) }}</div>
+        <div><strong>Vacancy Applied For:</strong> {{ application.job.title }}</div>
+        <div><strong>Submission Date:</strong> {{ application.created_at.strftime("%Y-%m-%d %H:%M:%S UTC") }}</div>
+        <div><strong>Current Status:</strong> {% if application.review_status in ["pending", "under_review"] %}Under Review{% else %}{{ application.review_status|capitalize }}{% endif %}</div>
+    </div>
+
+    <div class="form-actions">
+        <a class="btn" href="{{ url_for('dashboard') }}">Go to Dashboard</a>
+        <a class="btn btn-outline" href="{{ url_for('jobs') }}">View Other Vacancies</a>
+    </div>
+</section>
+{% endblock %}

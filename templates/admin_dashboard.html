@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Admin Dashboard</h1>
+    <p>System-level overview of the staff selection process workflow.</p>
+</section>
+
+<section class="stats-grid">
+    <article class="stat-box"><h3>{{ users_count }}</h3><p>Total Users</p></article>
+    <article class="stat-box"><h3>{{ jobs_count }}</h3><p>Vacancies</p></article>
+    <article class="stat-box"><h3>{{ applications_count }}</h3><p>Applications</p></article>
+    <article class="stat-box"><h3>{{ pending_count }}</h3><p>Under Review</p></article>
+    <article class="stat-box"><h3>{{ shortlisted_count }}</h3><p>Shortlisted</p></article>
+    <article class="stat-box"><h3>{{ assessed_count }}</h3><p>Assessed</p></article>
+    <article class="stat-box"><h3>{{ accepted_count }}</h3><p>Selected</p></article>
+    <article class="stat-box"><h3>{{ rejected_count }}</h3><p>Rejected</p></article>
+</section>
+
+<section class="quick-actions">
+    <a class="action-card" href="#account-manager">
+        <h3>Manage HR/Panel</h3>
+        <p>Create credentials and control access</p>
+    </a>
+    <a class="action-card" href="{{ url_for('audit_logs') }}">
+        <h3>Audit Trail</h3>
+        <p>Review system activity logs</p>
+    </a>
+    <a class="action-card" href="#mail-check">
+        <h3>Mail Check</h3>
+        <p>Validate SMTP and send test mail</p>
+    </a>
+    <a class="action-card" href="{{ url_for('staff_dashboard', status='under_review') }}">
+        <h3>Review Pipeline</h3>
+        <p>Open staff review dashboard</p>
+    </a>
+    <a class="action-card" href="{{ url_for('shortlisted') }}">
+        <h3>Shortlist Report</h3>
+        <p>View all shortlisted candidates</p>
+    </a>
+    <a class="action-card" href="{{ url_for('selected') }}">
+        <h3>Selected Report</h3>
+        <p>View final selected candidates</p>
+    </a>
+</section>
+
+{% if generated_credentials %}
+<section class="card-block credentials-panel">
+    <h2>Generated Credentials</h2>
+    <p>This credential set is shown once. Store it securely and ask the user to change password after first login.</p>
+    <div class="credentials-grid">
+        <div><strong>Role:</strong> {{ "HR" if generated_credentials.role == "staff" else "Interview Panel" }}</div>
+        <div><strong>Action:</strong> {{ "Account Created" if generated_credentials.action == "created" else "Password Reset" }}</div>
+        <div><strong>Generated At:</strong> {{ generated_credentials.created_at }}</div>
+        <div><strong>Email:</strong> <code id="generated-email">{{ generated_credentials.email }}</code>
+            <button class="btn btn-sm btn-outline copy-btn" type="button" data-copy-target="generated-email">Copy</button>
+        </div>
+        <div><strong>Temporary Password:</strong> <code id="generated-password">{{ generated_credentials.password }}</code>
+            <button class="btn btn-sm btn-outline copy-btn" type="button" data-copy-target="generated-password">Copy</button>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<section class="card-block" id="account-manager">
+    <h2>Account Management (HR and Panel)</h2>
+    <form method="POST" action="{{ url_for('create_managed_account') }}" class="vacancy-form">
+        <div class="vacancy-form-grid">
+            <div class="field-group">
+                <label for="managed-fullname">Full Name</label>
+                <input id="managed-fullname" type="text" name="fullname" required>
+            </div>
+            <div class="field-group">
+                <label for="managed-email">Email</label>
+                <input id="managed-email" type="email" name="email" required>
+            </div>
+            <div class="field-group">
+                <label for="managed-role">Role</label>
+                <select id="managed-role" name="role" required>
+                    <option value="staff">HR</option>
+                    <option value="panel">Interview Panel</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <label for="managed-password">Password (Optional)</label>
+                <input id="managed-password" type="text" name="password" minlength="6" placeholder="Leave blank to auto-generate">
+            </div>
+        </div>
+        <div class="form-actions">
+            <button class="btn" type="submit">Generate Login Details</button>
+        </div>
+    </form>
+
+    {% if managed_accounts %}
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Actions</th>
+        </tr>
+        {% for account in managed_accounts %}
+        <tr>
+            <td data-label="Name">{{ account.fullname }}</td>
+            <td data-label="Email">{{ account.email }}</td>
+            <td data-label="Role">{{ "HR" if account.role == "staff" else "Interview Panel" }}</td>
+            <td data-label="Actions">
+                <form method="POST" action="{{ url_for('reset_managed_account_password', user_id=account.id) }}">
+                    <input type="text" name="new_password" minlength="6" placeholder="Set new password (optional)">
+                    <button class="btn btn-sm btn-outline" type="submit">Reset Password</button>
+                </form>
+                <form method="POST" action="{{ url_for('delete_managed_account', user_id=account.id) }}" onsubmit="return confirm('Delete this account?');">
+                    <button class="btn btn-sm danger" type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No HR or panel accounts found.</p>
+    {% endif %}
+</section>
+
+<section class="card-block" id="mail-check">
+    <h2>Mail Settings Check</h2>
+    <p>Send a test email to verify SMTP configuration before creating or resetting accounts.</p>
+    <form method="POST" action="{{ url_for('test_mail_settings') }}" class="vacancy-form">
+        <div class="vacancy-form-grid">
+            <div class="field-group">
+                <label for="test-email">Test Recipient Email</label>
+                <input id="test-email" type="email" name="test_email" value="{{ current_user.email }}" required>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button class="btn" type="submit">Send Test Email</button>
+        </div>
+    </form>
+</section>
+
+<section class="card-block">
+    <h2>Recent Users</h2>
+    {% if recent_users %}
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+        </tr>
+        {% for user in recent_users %}
+        <tr>
+            <td data-label="Name">{{ user.fullname }}</td>
+            <td data-label="Email">{{ user.email }}</td>
+            <td data-label="Role">
+                {% if user.role == "staff" %}
+                    HR
+                {% elif user.role == "panel" %}
+                    Interview Panel
+                {% elif user.role == "admin" %}
+                    CEO/Manager (Admin)
+                {% else %}
+                    Applicant
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No users available.</p>
+    {% endif %}
+</section>
+{% endblock %}
